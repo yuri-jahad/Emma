@@ -6,6 +6,8 @@ out
 dist
 *.tgz
 
+src/data/
+
 # code coverage
 coverage
 *.lcov

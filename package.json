@@ -7,9 +7,15 @@
   },
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "add": "^2.0.6",
+    "bun": "^1.2.22",
+    "eslint": "^9.35.0"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.1"
   }
 }

@@ -1,46 +1,32 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js'
+import { SlashCommandBuilder } from 'discord.js'
 
 export default {
   data: new SlashCommandBuilder()
     .setName('user')
     .setDescription("Affiche des informations sur l'utilisateur."),
 
-  async execute (interaction) {
+  async execute(interaction) {
     const user = interaction.user
     const member = interaction.member
 
-    const embed = new EmbedBuilder()
-      .setColor('#5865F2') 
-      .setTitle(`👤 Profil de ${user.username}`)
-      .setDescription(`Informations sur <@${user.id}>`)
-      .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        {
-          name: "Nom d'utilisateur",
-          value: `\`${user.username}\``,
-          inline: true
-        },
-        { name: 'ID Utilisateur', value: `\`${user.id}\``, inline: true },
-        {
-          name: 'Compte créé',
-          value: `<t:${Math.floor(user.createdTimestamp / 1000)}:D>`,
-          inline: true
-        }
-      )
-      .setFooter({
-        text: `Demandé par ${interaction.user.username}`,
-        iconURL: interaction.user.displayAvatarURL()
-      })
-      .setTimestamp()
+    const createdDate = new Date(user.createdTimestamp).toLocaleDateString('fr-FR')
+    const joinedDate = member?.joinedAt ? new Date(member.joinedTimestamp).toLocaleDateString('fr-FR') : 'Non disponible'
 
-    if (member?.joinedAt) {
-      embed.addFields({
-        name: 'A rejoint le serveur',
-        value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:D>`,
-        inline: true
-      })
-    }
+    const message = `\`\`\`ansi
+\u001b[36m\u001b[1m═══════════════════════════════════════
+           PROFIL UTILISATEUR
+═══════════════════════════════════════\u001b[0m
 
-    await interaction.reply({ embeds: [embed] })
+\u001b[37mInformations sur ${user.username}\u001b[0m
+
+\u001b[36mNom d'utilisateur      :\u001b[0m \u001b[34m${user.username}\u001b[0m
+\u001b[36mID Utilisateur         :\u001b[0m \u001b[37m${user.id}\u001b[0m
+\u001b[36mCompte créé le         :\u001b[0m \u001b[33m${createdDate}\u001b[0m
+\u001b[36mA rejoint le serveur   :\u001b[0m \u001b[34m${joinedDate}\u001b[0m
+
+\u001b[90mDemandé par ${interaction.user.username}\u001b[0m
+\`\`\``
+
+    await interaction.reply({ content: message })
   }
 }

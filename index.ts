@@ -5,14 +5,7 @@ import { deployCommands } from './src/commands/execute-commands'
 const client = await initBot()
 
 if (client) {
-  console.log('🚀 Déploiement des commandes...')
-
-  try {
-    await deployCommands()
-    console.log('✅ Commandes déployées!')
-  } catch (error) {
-    console.error('❌ Erreur lors du déploiement:', error)
-  }
+  await deployCommands()
 
   client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return
@@ -28,10 +21,32 @@ if (client) {
     }
 
     try {
-      console.log(`🔄 Exécution de la commande: ${interaction.commandName}`)
-      await command.execute(interaction) // ✅ Cette ligne doit appeler ta commande
-      console.log(`✅ Commande ${interaction.commandName} exécutée`)
+      const start = performance.now()
+      let hasReplied = false
+
+      const originalReply = interaction.reply.bind(interaction)
+
+      ;(interaction as any).reply = function (options: any) {
+        hasReplied = true
+        const elapsed = (performance.now() - start).toFixed(2) + 'ms'
+
+        if (typeof options === 'string') {
+          options = options + `\nExécuté en ${elapsed}`
+        } else if (options.content) {
+          // Injecte dans le footer gris de tes messages ANSI
+          options.content = options.content.replace(
+            /(\u001b\[90m.*?)(\u001b\[0m\n```$)/,
+            `$1 • ${elapsed}$2`
+          )
+        }
+
+        return originalReply(options)
+      }
+
+      await command.execute(interaction)
     } catch (error) {
+      console.error(`Erreur dans ${interaction.commandName}:`, error)
+
       const errorReply = {
         content: "Une erreur est survenue lors de l'exécution!",
         ephemeral: true

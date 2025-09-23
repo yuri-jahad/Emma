@@ -64,6 +64,16 @@ class Emma {
 
   addCommand (name: string, command: any): void {
     this.commands.set(name, command)
+
+    if (!command.data || !command.execute) {
+      console.warn(`Commande ${name} invalide (manque data ou execute)`)
+    }
+  }
+
+  getCommandsForDeployment (): any[] {
+    return Array.from(this.commands.values())
+      .filter(cmd => cmd && cmd.data)
+      .map(cmd => cmd.data.toJSON())
   }
 
   getCommand (name: string): any | null {
@@ -96,5 +106,6 @@ export const initBot = () => emma.start()
 export const getClient = () => emma.getClient()
 export const isBotReady = () => emma.isReady()
 export const stopBot = () => emma.stop()
-export const addCommand = (name: string, command: any) => emma.addCommand(name, command)
+export const addCommand = (name: string, command: any) =>
+  emma.addCommand(name, command)
 export const getCommand = (name: string) => emma.getCommand(name)

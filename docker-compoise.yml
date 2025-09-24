@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  emma-bot:
+    build: .
+    container_name: emma-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./authorized-guilds.json:/app/authorized-guilds.json
+      - ./logs:/app/logs
+    networks:
+      - emma-network
+    healthcheck:
+      test: ["CMD", "bun", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  emma-network:
+    driver: bridge
+
+volumes:
+  bot-data:

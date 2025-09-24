@@ -1,80 +1,82 @@
 import { SlashCommandBuilder } from 'discord.js'
-
 import { getDefinitions } from '../utils/get-definitions'
-import ColorMessage from './colors-message'
+import ColorMessage from '../utils/colors-message'
 
 export default {
   data: new SlashCommandBuilder()
     .setName('def')
-    .setDescription('Affiche la définition d\'un mot')
+    .setDescription("Affiche la définition d'un mot")
     .addStringOption(option =>
-      option.setName('mot')
-        .setDescription('Le mot à définir')
-        .setRequired(true)),
+      option.setName('mot').setDescription('Le mot à définir').setRequired(true)
+    ),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const word = interaction.options.getString('mot', true).toLowerCase().trim()
 
     try {
       const result = await getDefinitions(word)
-      console.log(result)
-      
+
       if (!result || !result.success) {
-        const message = ColorMessage.block(
+        const headerMessage = ColorMessage.errorHeader(
           'DÉFINITION NON TROUVÉE',
-          'Aucune définition disponible pour ce mot',
-          [
-            { label: 'Mot recherché', value: word, color: 'blue' },
-            { label: 'Statut', value: 'Non trouvé dans le dictionnaire', color: 'magenta' }
-          ],
-          `Demandé par ${interaction.user.username}`,
-          'yellow'
+          `Le mot "${word}" n'existe pas dans le dictionnaire`,
+          `Demandé par ${interaction.user.username}`
         )
-        await interaction.reply({ content: message })
+
+        const contentMessage = ColorMessage.errorContent([
+          { label: 'Mot recherché', value: word },
+          { label: 'Statut', value: 'Non trouvé' }
+        ])
+
+        await interaction.channel.send({ content: headerMessage })
+        await interaction.channel.send({ content: contentMessage })
         return
       }
 
       const { word_details, definitions } = result
-      
+
+      const headerMessage = ColorMessage.header(
+        'DÉFINITION',
+        `Mot: ${word_details.word.toUpperCase()} - Définitions totales: ${
+          definitions.length
+        } - Affichées: ${Math.min(definitions.length, 3)}`,
+        `Demandé par ${interaction.user.username}`
+      )
+
       const definitionsText = definitions
-        .slice(0, 5)
+        .slice(0, 3)
         .map((def, index) => {
-          const shortDef = def.definition.length > 150 
-            ? def.definition.substring(0, 150) + '...' 
-            : def.definition
+          const shortDef =
+            def.definition.length > 280
+              ? def.definition.substring(0, 280) + '...'
+              : def.definition
           return `${index + 1}. ${shortDef} (${def.source_name})`
         })
         .join('\n\n')
 
-      const message = ColorMessage.block(
-        'DÉFINITION',
-        `Définitions du mot "${word_details.word}"`,
-        [
-          { label: 'Mot', value: word_details.word, color: 'blue' },
-          { label: 'Nombre de définitions', value: `${definitions.length}`, color: 'blue' },
-          { label: 'Définitions affichées', value: `${Math.min(definitions.length, 5)}`, color: 'blue' },
-          { label: 'Définitions', value: definitionsText, color: 'cyan' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'cyan'
-      )
+      const contentMessage = ColorMessage.content([
+        { label: 'Defs', value: definitionsText }
+      ])
 
-      await interaction.reply({ content: message })
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
 
     } catch (error) {
       console.error('Erreur dans la commande def:', error)
-      
-      const message = ColorMessage.block(
-        'ERREUR DE RECHERCHE',
-        'Une erreur est survenue lors de la recherche',
-        [
-          { label: 'Mot recherché', value: word, color: 'magenta' },
-          { label: 'Erreur', value: 'Problème de connexion à l\'API', color: 'magenta' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'red'
+
+      const headerMessage = ColorMessage.errorHeader(
+        'ERREUR SYSTÈME',
+        'Impossible de récupérer les définitions',
+        `Demandé par ${interaction.user.username}`
       )
-      await interaction.reply({ content: message })
+
+      const contentMessage = ColorMessage.errorContent([
+        { label: 'Mot recherché', value: word },
+        { label: 'Erreur', value: 'Connexion API échouée' }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
     }
   }
 }

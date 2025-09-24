@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js'
 import { getSoluces } from '../utils/search-syllables'
-import ColorMessage from './colors-message'
+import ColorMessage from '../utils/colors-message'
 
 export default {
   data: new SlashCommandBuilder()
@@ -18,17 +18,19 @@ export default {
       const result = await getSoluces(occurrenceCount)
 
       if (result.status === 'failed') {
-        const message = ColorMessage.block(
+        const headerMessage = ColorMessage.errorHeader(
           'ERREUR DE PARAMÈTRE',
           'Le paramètre fourni n\'est pas valide',
-          [
-            { label: 'Paramètre fourni', value: occurrenceCount, color: 'magenta' },
-            { label: 'Erreur', value: result.message, color: 'magenta' }
-          ],
-          `Demandé par ${interaction.user.username}`,
-          'red'
+          `Demandé par ${interaction.user.username}`
         )
-        await interaction.reply({ content: message })
+
+        const contentMessage = ColorMessage.errorContent([
+          { label: 'Paramètre fourni', value: occurrenceCount },
+          { label: 'Erreur', value: result.message }
+        ])
+
+        await interaction.channel.send({ content: headerMessage })
+        await interaction.channel.send({ content: contentMessage })
         return
       }
 
@@ -39,35 +41,35 @@ export default {
         ? result.message.split('\n').slice(1).join(' ') 
         : 'Aucune syllabe trouvée'
 
-      const message = ColorMessage.block(
+      const headerMessage = ColorMessage.header(
         'RECHERCHE DE SYLLABES',
-        'Syllabes trouvées par nombre d\'occurrences',
-        [
-          { label: 'Occurrences recherchées', value: occurrenceCount, color: 'blue' },
-          { label: 'Syllabes trouvées', value: syllableCount, color: 'blue' },
-          { label: 'Syllabes affichées', value: 'Maximum 200', color: 'blue' },
-          { label: 'Résultats', value: syllablesText, color: 'cyan' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'cyan'
+        `Occurrences: ${occurrenceCount} - Syllabes trouvées: ${syllableCount} - Affichées: Maximum 200`,
+        `Demandé par ${interaction.user.username}`
       )
 
-      await interaction.reply({ content: message })
+      const contentMessage = ColorMessage.content([
+        { label: 'Syllables', value: syllablesText }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
 
     } catch (error) {
       console.error('Erreur dans la commande syllables:', error)
       
-      const message = ColorMessage.block(
+      const headerMessage = ColorMessage.errorHeader(
         'ERREUR SYSTÈME',
         'Une erreur est survenue lors de la recherche',
-        [
-          { label: 'Paramètre fourni', value: occurrenceCount, color: 'magenta' },
-          { label: 'Erreur', value: 'Problème lors du traitement', color: 'magenta' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'red'
+        `Demandé par ${interaction.user.username}`
       )
-      await interaction.reply({ content: message })
+
+      const contentMessage = ColorMessage.errorContent([
+        { label: 'Paramètre fourni', value: occurrenceCount },
+        { label: 'Erreur', value: 'Problème lors du traitement' }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
     }
   }
 }

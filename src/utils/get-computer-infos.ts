@@ -39,7 +39,6 @@ const getPlatformName = (platform: string): string => {
   return platforms[platform] || platform
 }
 
-// ✅ Exportation d'une fonction, pas d'une valeur statique
 export const getSystemInfo = (): SystemInfo => {
   const platform = getPlatformName(os.platform())
   const arch = os.arch()

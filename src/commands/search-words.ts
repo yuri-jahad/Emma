@@ -1,87 +1,100 @@
 import { search } from '../utils/search-words'
 import { SlashCommandBuilder } from 'discord.js'
 import { list } from '../data/initialize-dico'
-import ColorMessage from './colors-message'
-
+import ColorMessage from '../utils/colors-message'
 
 export default {
   data: new SlashCommandBuilder()
     .setName('words')
     .setDescription('Recherche des mots dans le dictionnaire')
     .addStringOption(option =>
-      option.setName('pattern')
+      option
+        .setName('pattern')
         .setDescription('Pattern de recherche (regex supportée)')
-        .setRequired(true))
+        .setRequired(true)
+    )
     .addIntegerOption(option =>
-      option.setName('limit')
+      option
+        .setName('limit')
         .setDescription('Nombre maximum de résultats affichés')
         .setMinValue(1)
         .setMaxValue(50)
-        .setRequired(false)),
+        .setRequired(false)
+    ),
 
-  async execute(interaction) {
+  async execute (interaction) {
     const pattern = interaction.options.getString('pattern', true)
     const limit = interaction.options.getInteger('limit') ?? 10
 
     if (!list?.success) {
-      const message = ColorMessage.block(
+      const headerMessage = ColorMessage.errorHeader(
         'ERREUR DICTIONNAIRE',
-        'Le dictionnaire n\'est pas disponible actuellement',
-        [],
-        `Demandé par ${interaction.user.username}`,
-        'red'
+        "Le dictionnaire n'est pas disponible actuellement",
+        `Demandé par ${interaction.user.username}`
       )
-      await interaction.reply({ content: message })
+
+      const contentMessage = ColorMessage.errorContent([
+        { label: 'Pattern recherché', value: pattern },
+        { label: 'Statut', value: 'Dictionnaire indisponible' }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
       return
     }
 
     try {
       const { results, total } = search(pattern, list.data.words, limit)
-      
+
       if (total === 0) {
-        const message = ColorMessage.block(
-          'RECHERCHE DICTIONNAIRE',
-          'Aucun résultat trouvé pour le pattern',
-          [
-            { label: 'Pattern recherché', value: pattern, color: 'blue' },
-            { label: 'Nombre total de mots', value: list.data.words.length.toLocaleString(), color: 'blue' }
-          ],
-          `Demandé par ${interaction.user.username}`,
-          'cyan'
+        const headerMessage = ColorMessage.errorHeader(
+          'AUCUN RÉSULTAT TROUVÉ',
+          `Le pattern "${pattern}" ne correspond à aucun mot`,
+          `Demandé par ${interaction.user.username}`
         )
-        await interaction.reply({ content: message })
+
+        const contentMessage = ColorMessage.errorContent([
+          { label: 'Pattern recherché', value: pattern },
+          { label: 'Statut', value: 'Aucun résultat' }
+        ])
+
+        await interaction.channel.send({ content: headerMessage })
+        await interaction.channel.send({ content: contentMessage })
         return
       }
 
-      const wordsDisplay = results.join(', ')
-      
-      const message = ColorMessage.block(
+      const headerMessage = ColorMessage.header(
         'RECHERCHE DICTIONNAIRE',
-        'Résultats de la recherche',
-        [
-          { label: 'Pattern recherché', value: pattern, color: 'blue' },
-          { label: 'Résultats trouvés', value: `${total} mot(s)`, color: 'blue' },
-          { label: 'Résultats affichés', value: `${results.length}/${limit}`, color: 'blue' },
-          { label: 'Mots trouvés', value: wordsDisplay, color: 'cyan' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'cyan'
+        `Pattern: ${pattern.toUpperCase()} - Résultats totaux: ${total} - Affichés: ${
+          results.length
+        }`,
+        `Demandé par ${interaction.user.username}`
       )
 
-      await interaction.reply({ content: message })
+      const wordsDisplay = results.join(', ')
 
+      const contentMessage = ColorMessage.content([
+        { label: 'Soluces', value: wordsDisplay }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
     } catch (error) {
-      const message = ColorMessage.block(
+      console.error('Erreur dans la commande words:', error)
+
+      const headerMessage = ColorMessage.errorHeader(
         'ERREUR DE RECHERCHE',
         'Pattern de recherche invalide',
-        [
-          { label: 'Pattern fourni', value: pattern, color: 'magenta' },
-          { label: 'Erreur', value: 'Expression régulière invalide', color: 'magenta' }
-        ],
-        `Demandé par ${interaction.user.username}`,
-        'red'
+        `Demandé par ${interaction.user.username}`
       )
-      await interaction.reply({ content: message })
+
+      const contentMessage = ColorMessage.errorContent([
+        { label: 'Pattern fourni', value: pattern },
+        { label: 'Erreur', value: 'Expression régulière invalide' }
+      ])
+
+      await interaction.channel.send({ content: headerMessage })
+      await interaction.channel.send({ content: contentMessage })
     }
   }
 }

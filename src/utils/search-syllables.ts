@@ -5,7 +5,7 @@ const occurrences = list?.data.occurrences
 
 export const getSoluces = async (
   occurrenceCount: string
-): Promise<GetSolucesReturn> => {
+): Promise<any> => {
   const parsedOccurrenceCount = parseInt(occurrenceCount)
 
   if (isNaN(parsedOccurrenceCount)) {

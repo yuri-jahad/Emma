@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js'
 import { getSystemInfo } from '../utils/get-computer-infos'
+import ColorMessage from '../utils/colors-message'
 
 export default {
   data: new SlashCommandBuilder()
@@ -9,25 +10,24 @@ export default {
   async execute(interaction) {
     const systemInfo = getSystemInfo()
 
-    const message = `\`\`\`ansi
-\u001b[36m\u001b[1m═══════════════════════════════════════
-           INFORMATIONS SYSTÈME
-═══════════════════════════════════════\u001b[0m
+    const headerMessage = ColorMessage.header(
+      'INFORMATIONS SYSTÈME',
+      'État actuel du serveur hébergeant le bot',
+      `Demandé par ${interaction.user.username}`
+    )
 
-\u001b[37mÉtat actuel du serveur hébergeant le bot\u001b[0m
+    const contentMessage = ColorMessage.content([
+      { label: 'Système d\'exploitation', value: `${systemInfo.platform} ${systemInfo.arch}` },
+      { label: 'Processeur', value: systemInfo.processor },
+      { label: 'Nombre de cœurs', value: systemInfo.cores },
+      { label: 'Mémoire RAM totale', value: `${systemInfo.totalMemory}GB` },
+      { label: 'Mémoire RAM utilisée', value: `${systemInfo.usedMemory}GB (${systemInfo.memoryUsage}%)` },
+      { label: 'Mémoire RAM libre', value: `${systemInfo.freeMemory}GB` },
+      { label: 'Temps de fonctionnement', value: systemInfo.uptime },
+      { label: 'Version Node.js', value: systemInfo.nodeVersion }
+    ])
 
-\u001b[36mSystème d'exploitation :\u001b[0m \u001b[34m${systemInfo.platform} ${systemInfo.arch}\u001b[0m
-\u001b[36mProcesseur             :\u001b[0m \u001b[37m${systemInfo.processor}\u001b[0m
-\u001b[36mNombre de cœurs        :\u001b[0m \u001b[33m${systemInfo.cores}\u001b[0m
-\u001b[36mMémoire RAM totale     :\u001b[0m \u001b[37m${systemInfo.totalMemory}GB\u001b[0m
-\u001b[36mMémoire RAM utilisée   :\u001b[0m \u001b[33m${systemInfo.usedMemory}GB (${systemInfo.memoryUsage}%)\u001b[0m
-\u001b[36mMémoire RAM libre      :\u001b[0m \u001b[34m${systemInfo.freeMemory}GB\u001b[0m
-\u001b[36mTemps de fonctionnement:\u001b[0m \u001b[35m${systemInfo.uptime}\u001b[0m
-\u001b[36mVersion Node.js        :\u001b[0m \u001b[34m${systemInfo.nodeVersion}\u001b[0m
-
-\u001b[90mDemandé par ${interaction.user.username}\u001b[0m
-\`\`\``
-
-    await interaction.reply({ content: message })
+    await interaction.channel.send({ content: headerMessage })
+    await interaction.channel.send({ content: contentMessage })
   }
 }
